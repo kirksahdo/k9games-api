@@ -24,7 +24,11 @@
       "required": true
     },
     "description": {
-      "type": "blocks"
+      "type": "customField",
+      "options": {
+        "preset": "defaultHtml"
+      },
+      "customField": "plugin::ckeditor5.CKEditor"
     },
     "price": {
       "type": "decimal",
@@ -37,31 +41,20 @@
     },
     "rating": {
       "type": "enumeration",
-      "enum": [
-        "BR0",
-        "BR10",
-        "BR12",
-        "BR14",
-        "BR16",
-        "BR18"
-      ],
+      "enum": ["BR0", "BR10", "BR12", "BR14", "BR16", "BR18"],
       "required": false
     },
     "cover": {
       "type": "media",
       "multiple": false,
       "required": false,
-      "allowedTypes": [
-        "images"
-      ]
+      "allowedTypes": ["images"]
     },
     "gallery": {
       "type": "media",
       "multiple": true,
       "required": false,
-      "allowedTypes": [
-        "images"
-      ]
+      "allowedTypes": ["images"]
     },
     "developers": {
       "type": "relation",
