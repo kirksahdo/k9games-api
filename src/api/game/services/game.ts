@@ -8,6 +8,8 @@ import { JSDOM } from "jsdom";
 import moment from "moment";
 import slugify from "slugify";
 
+const GAME_SERVICE = "api::game.game";
+
 type Rating = "BR0" | "BR10" | "BR12" | "BR14" | "BR16" | "BR18";
 
 function isRating(value: string): value is Rating {
@@ -100,6 +102,47 @@ async function createGameSubfields(game) {
   return { developers, publishers, categories, platforms };
 }
 
+async function sendImageToApi({ image, game, field = "cover" }) {
+  const { data } = await axios.get(image, { responseType: "arraybuffer" });
+  const buffer = Buffer.from(data, "base64");
+
+  const FormData = require("form-data");
+
+  const formData: any = new FormData();
+
+  formData.append("refId", game.id);
+  formData.append("ref", `${GAME_SERVICE}`);
+  formData.append("field", field);
+  formData.append("files", buffer, { filename: `${game.slug}.jpg` });
+
+  console.info(`Uploading ${field} image: ${game.slug}.jpg`);
+
+  await axios({
+    method: "POST",
+    url: `http://localhost:1337/api/upload/`,
+    data: formData,
+    headers: {
+      "Content-Type": `multipart/form-data; boundary=${formData._boundary}`,
+    },
+  });
+}
+
+async function uploadGamePhotos(game, createdGame) {
+  await sendImageToApi({ image: game.coverHorizontal, game: createdGame });
+  await Promise.all(
+    game.screenshots.slice(0, 5).map((url) =>
+      sendImageToApi({
+        image: `${url.replace(
+          "{formatter}",
+          "product_card_v2_mobile_slider_639",
+        )}`,
+        game: createdGame,
+        field: "gallery",
+      }),
+    ),
+  );
+}
+
 async function createGame(game) {
   const { categories, developers, platforms, publishers } =
     await createGameSubfields(game);
@@ -110,7 +153,7 @@ async function createGame(game) {
   console.log("Creating game", game.title);
 
   try {
-    await strapi.documents("api::game.game").create({
+    const createdGame = await strapi.documents("api::game.game").create({
       data: {
         name: game.title,
         slug: slugify(game.title, { lower: true, strict: true }),
@@ -125,6 +168,7 @@ async function createGame(game) {
         platforms: platforms,
       },
     });
+    uploadGamePhotos(game, createdGame);
   } catch (error) {
     console.error("Error creating game:", game.title, error);
   }
