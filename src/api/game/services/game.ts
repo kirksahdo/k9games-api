@@ -3,8 +3,9 @@
  */
 
 import { factories } from "@strapi/strapi";
-import axios from "axios";
 import { JSDOM } from "jsdom";
+import qs from "qs";
+import axios from "axios";
 import moment from "moment";
 import slugify from "slugify";
 
@@ -201,7 +202,7 @@ async function createGame(game) {
 export default factories.createCoreService("api::game.game", () => ({
   populate: async (params) => {
     try {
-      const gogApiUrl = "https://catalog.gog.com/v1/catalog?order=desc&page=1";
+      const gogApiUrl = `https://catalog.gog.com/v1/catalog?${qs.stringify(params)}`;
 
       const {
         data: { products },
